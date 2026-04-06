@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DFA Minimization — Interactive Learning Tool</title>
+  <meta name="description"
+    content="Learn DFA minimization interactively using Partition/Equivalence and Table-Filling (Myhill-Nerode) methods. Visualize, explore, and understand step-by-step." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">⊕</span>
+        <div>
+          <span class="logo-title">DFA Minimizer</span>
+          <span class="logo-sub">TAFL Project-2024UCA1885</span>
+        </div>
+      </div>
+      <nav class="main-nav" id="mainNav">
+        <button class="nav-btn active" data-tab="theory">📖 Theory</button>
+        <button class="nav-btn" data-tab="builder">🔧 Build DFA</button>
+        <button class="nav-btn" data-tab="partition">① Partition</button>
+        <button class="nav-btn" data-tab="myhill">② Table Filling</button>
+        <button class="nav-btn" data-tab="compare">⚖ Compare</button>
+      </nav>
+      <button class="menu-toggle" id="menuToggle" aria-label="Menu">☰</button>
+    </div>
+  </header>
+
+  <!-- ===== MAIN ===== -->
+  <main class="main-content">
+
+    <!-- ========== THEORY TAB ========== -->
+    <section class="tab-panel active" id="tab-theory">
+      <div class="theory-hero">
+        <h1>Understanding DFA Minimization</h1>
+        <p class="hero-sub">Why do we minimize, and how does it work? Let's walk through it from scratch.</p>
+      </div>
+
+      <div class="theory-grid">
+
+        <article class="theory-card card-blue">
+          <div class="card-icon">🤔</div>
+          <h2>What is a DFA?</h2>
+          <p>A <strong>Deterministic Finite Automaton (DFA)</strong> is a mathematical model for recognizing patterns in
+            strings. It has a finite set of <em>states</em>, reads an input symbol at a time, and always transitions to
+            exactly one next state.</p>
+          <div class="definition-box">
+            <span class="def-label">Formally:</span>
+            A DFA is a 5-tuple <strong>M = (Q, Σ, δ, q₀, F)</strong> where Q is the set of states, Σ is the alphabet, δ:
+            Q × Σ → Q is the transition function, q₀ is the start state, and F ⊆ Q is the set of accepting states.
+          </div>
+        </article>
+
+        <article class="theory-card card-green">
+          <div class="card-icon">❓</div>
+          <h2>Why Minimize?</h2>
+          <p>The same language can be recognized by many different DFAs — some with fewer states, some with more. A DFA
+            with <em>redundant states</em> wastes memory and computation.</p>
+          <ul class="why-list">
+            <li>🗜️ Reduces memory usage in real systems</li>
+            <li>⚡ Speeds up string recognition</li>
+            <li>🔍 Gives a canonical form — the <strong>unique minimum DFA</strong> for any regular language</li>
+            <li>🧩 Helps in comparing DFAs (two DFAs accept the same language iff their minimizations are isomorphic)
+            </li>
+          </ul>
+        </article>
+
+        <article class="theory-card card-orange">
+          <div class="card-icon">🔁</div>
+          <h2>Key Idea: Distinguishability</h2>
+          <p>Two states <strong>p</strong> and <strong>q</strong> are <em>distinguishable</em> if there exists some
+            string <em>w</em> such that exactly one of δ*(p, w) and δ*(q, w) is an accepting state.</p>
+          <p>States that are <em>indistinguishable</em> for all possible strings can be safely <strong>merged</strong> —
+            they behave identically.</p>
+          <div class="definition-box">
+            <span class="def-label">Core principle:</span>
+            Minimization = find all indistinguishable state pairs and merge them.
+          </div>
+        </article>
+
+        <article class="theory-card card-purple">
+          <div class="card-icon">🪜</div>
+          <h2>Steps to Minimize (Overview)</h2>
+          <ol class="steps-list">
+            <li><strong>Remove unreachable states</strong> — states that cannot be reached from the start state can be
+              deleted immediately.</li>
+            <li><strong>Find distinguishable pairs</strong> — using one of two methods (see below).</li>
+            <li><strong>Merge indistinguishable states</strong> — group them into equivalence classes.</li>
+            <li><strong>Build the new DFA</strong> — each equivalence class becomes one state.</li>
+          </ol>
+        </article>
+
+      </div>
+
+      <div class="methods-compare">
+        <h2 class="section-heading">Two Methods, One Goal</h2>
+        <div class="methods-grid">
+
+          <div class="method-card">
+            <div class="method-badge">Method 1</div>
+            <h3>Partition / Equivalence Class Refinement</h3>
+            <p>Start by splitting all states into two groups: <em>accepting</em> and <em>non-accepting</em>. Then
+              repeatedly refine these groups by checking if states in the same group behave differently under some input
+              symbol. Stop when no more refinement is possible.</p>
+            <div class="method-analogy">
+              <span>🧩 Analogy:</span> Sorting people into groups by their answers to questions, until no group needs
+              further splitting.
+            </div>
+            <div class="method-complexity">Time: O(n² · |Σ|) with Hopcroft's: O(n log n)</div>
+          </div>
+
+          <div class="method-card">
+            <div class="method-badge">Method 2</div>
+            <h3>Table Filling / Myhill-Nerode</h3>
+            <p>Create a table of all state pairs. Mark pairs that are obviously distinguishable (one accepts, one
+              doesn't). Then propagate: if δ(p, a) and δ(q, a) are distinguishable, then (p, q) is too. Repeat until no
+              more marks can be added.</p>
+            <div class="method-analogy">
+              <span>🗺️ Analogy:</span> A puzzle where marking one cell forces you to mark others — like a chain
+              reaction.
+            </div>
+            <div class="method-complexity">Time: O(n²) — polynomial in the number of states</div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="theory-note">
+        <div class="note-icon">💡</div>
+        <div>
+          <strong>Myhill-Nerode Theorem</strong> — A language L is regular if and only if it has a finite index (finite
+          number of equivalence classes under the relation x ~ y iff ∀z: xz ∈ L ↔ yz ∈ L). The minimum DFA has exactly
+          as many states as there are equivalence classes.
+        </div>
+      </div>
+
+      <div class="cta-row">
+        <button class="cta-btn" onclick="switchTab('builder')">Try it yourself → Build a DFA</button>
+      </div>
+
+    </section>
+
+    <!-- ========== BUILDER TAB ========== -->
+    <section class="tab-panel" id="tab-builder">
+      <div class="panel-header">
+        <h1>Build Your DFA</h1>
+        <p>Define states, alphabet, and transitions. Or load a preset to get started quickly.</p>
+      </div>
+
+      <div class="builder-layout">
+        <!-- LEFT: Controls -->
+        <div class="builder-controls">
+
+          <div class="control-group">
+            <label class="control-label">Load a Preset</label>
+            <select id="presetSelect" class="control-input">
+              <option value="">— Choose a preset DFA —</option>
+            </select>
+            <button class="btn-secondary" onclick="loadPreset()">Load Preset</button>
+          </div>
+
+          <hr class="divider" />
+
+          <div class="control-group">
+            <label class="control-label">States <span class="hint">(comma-separated)</span></label>
+            <input type="text" id="inputStates" class="control-input" placeholder="q0, q1, q2, q3" />
+          </div>
+
+          <div class="control-group">
+            <label class="control-label">Alphabet <span class="hint">(comma-separated symbols)</span></label>
+            <input type="text" id="inputAlphabet" class="control-input" placeholder="a, b" />
+          </div>
+
+          <div class="control-group">
+            <label class="control-label">Start State</label>
+            <input type="text" id="inputStart" class="control-input" placeholder="q0" />
+          </div>
+
+          <div class="control-group">
+            <label class="control-label">Accept States <span class="hint">(comma-separated)</span></label>
+            <input type="text" id="inputAccept" class="control-input" placeholder="q2" />
+          </div>
+
+          <div class="control-group">
+            <label class="control-label">Transition Table</label>
+            <div id="transitionTableContainer">
+              <p class="hint">Enter states and alphabet above, then click "Build Table".</p>
+            </div>
+            <button class="btn-secondary mt-2" onclick="buildTransitionTable()">Build Table</button>
+          </div>
+
+          <div id="validationMessages" class="validation-box"></div>
+
+          <div class="builder-actions">
+            <button class="btn-primary" onclick="applyDFA()">✅ Apply DFA</button>
+            <button class="btn-danger" onclick="resetDFA()">🗑 Reset</button>
+          </div>
+
+          <!-- String tester -->
+          <div class="string-tester" id="stringTester" style="display:none">
+            <label class="control-label">Test a String</label>
+            <div class="tester-row">
+              <input type="text" id="testInput" class="control-input" placeholder="e.g. aab" />
+              <button class="btn-secondary" onclick="testString()">Test</button>
+            </div>
+            <div id="testResult" class="test-result"></div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT: Visualization -->
+        <div class="builder-viz">
+          <div class="viz-label">Current DFA</div>
+          <div id="builderDfaViz" class="dfa-canvas"></div>
+          <div class="viz-legend">
+            <span class="legend-item"><span class="legend-dot dot-start"></span> Start</span>
+            <span class="legend-item"><span class="legend-dot dot-accept"></span> Accept</span>
+            <span class="legend-item"><span class="legend-dot dot-normal"></span> Normal</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="goto-methods" id="gotoMethods" style="display:none">
+        <span>DFA ready!</span>
+        <button class="btn-primary" onclick="switchTab('partition')">Run Partition Method →</button>
+        <button class="btn-primary btn-alt" onclick="switchTab('myhill')">Run Table Filling →</button>
+      </div>
+    </section>
+
+    <!-- ========== PARTITION TAB ========== -->
+    <section class="tab-panel" id="tab-partition">
+      <div class="panel-header">
+        <h1>Method 1: Partition / Equivalence Class Refinement</h1>
+        <p>Watch how the states get grouped and split across iterations until the partition stabilizes.</p>
+      </div>
+
+      <div id="partitionNoData" class="no-data-msg">
+        Please <button class="link-btn" onclick="switchTab('builder')">build a DFA</button> first.
+      </div>
+
+      <div id="partitionContent" style="display:none">
+
+        <div class="algo-explainer">
+          <div class="algo-step-desc">
+            <h3>How it works:</h3>
+            <ol>
+              <li>Split states into <strong>P₀ = {F, Q\F}</strong> — accepting and non-accepting.</li>
+              <li>For each group G, check if two states in G have transitions to <em>different groups</em> on the same
+                symbol.</li>
+              <li>If yes, split G into subgroups. Repeat.</li>
+              <li>Stop when no group can be split further — the partition is stable.</li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- Step navigator -->
+        <div class="step-nav">
+          <button class="step-btn" id="partPrev" onclick="partitionPrev()">← Prev</button>
+          <span class="step-counter" id="partCounter">Step 0 / 0</span>
+          <button class="step-btn" id="partNext" onclick="partitionNext()">Next →</button>
+          <button class="step-btn step-btn-all" onclick="partitionRunAll()">▶ Run All</button>
+        </div>
+
+        <div class="partition-display" id="partitionDisplay">
+          <!-- Filled by JS -->
+        </div>
+
+        <div class="step-description" id="partitionStepDesc"></div>
+
+        <div class="partition-result" id="partitionResult" style="display:none">
+          <h3>✅ Final Equivalence Classes</h3>
+          <div id="partitionFinalClasses"></div>
+          <div class="minimized-dfa-section">
+            <h3>Minimized DFA</h3>
+            <div id="partitionMinDfaViz" class="dfa-canvas"></div>
+            <div id="partitionMinDfaTable"></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========== MYHILL / TABLE FILLING TAB ========== -->
+    <section class="tab-panel" id="tab-myhill">
+      <div class="panel-header">
+        <h1>Method 2: Table Filling (Myhill-Nerode)</h1>
+        <p>Build a table of all state pairs and mark distinguishable ones, step by step.</p>
+      </div>
+
+      <div id="myhillNoData" class="no-data-msg">
+        Please <button class="link-btn" onclick="switchTab('builder')">build a DFA</button> first.
+      </div>
+
+      <div id="myhillContent" style="display:none">
+
+        <div class="algo-explainer">
+          <div class="algo-step-desc">
+            <h3>How it works:</h3>
+            <ol>
+              <li><strong>Base case:</strong> Mark (p, q) if one is accepting and the other is not.</li>
+              <li><strong>Inductive step:</strong> If δ(p, a) and δ(q, a) are already marked, mark (p, q) too.</li>
+              <li>Repeat step 2 until no new pairs can be marked.</li>
+              <li><strong>Unmarked pairs</strong> are equivalent — merge them.</li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- Step navigator -->
+        <div class="step-nav">
+          <button class="step-btn" id="myhillPrev" onclick="myhillPrev()">← Prev</button>
+          <span class="step-counter" id="myhillCounter">Step 0 / 0</span>
+          <button class="step-btn" id="myhillNext" onclick="myhillNext()">Next →</button>
+          <button class="step-btn step-btn-all" onclick="myhillRunAll()">▶ Run All</button>
+        </div>
+
+        <div class="step-description" id="myhillStepDesc"></div>
+
+        <div class="table-container">
+          <div id="myhillTable" class="myhill-table-wrap"></div>
+        </div>
+
+        <div id="myhillLegend" class="table-legend">
+          <span class="legend-item"><span class="tbl-marked">✗</span> Distinguishable</span>
+          <span class="legend-item"><span class="tbl-new">✗</span> Newly marked this step</span>
+          <span class="legend-item"><span class="tbl-equiv">≡</span> Equivalent (unmarked)</span>
+        </div>
+
+        <div class="partition-result" id="myhillResult" style="display:none">
+          <h3>✅ Indistinguishable Pairs & Equivalence Classes</h3>
+          <div id="myhillEquivPairs"></div>
+          <div class="minimized-dfa-section">
+            <h3>Minimized DFA</h3>
+            <div id="myhillMinDfaViz" class="dfa-canvas"></div>
+            <div id="myhillMinDfaTable"></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========== COMPARE TAB ========== -->
+    <section class="tab-panel" id="tab-compare">
+      <div class="panel-header">
+        <h1>Side-by-Side Comparison</h1>
+        <p>Original DFA vs. Minimized DFA — see what changed.</p>
+      </div>
+
+      <div id="compareNoData" class="no-data-msg">
+        Please <button class="link-btn" onclick="switchTab('builder')">build a DFA</button> first.
+      </div>
+
+      <div id="compareContent" style="display:none">
+        <div class="compare-stats" id="compareStats"></div>
+        <div class="compare-grid">
+          <div class="compare-pane">
+            <div class="compare-pane-label">Original DFA</div>
+            <div id="compareOrigViz" class="dfa-canvas compare-canvas"></div>
+            <div id="compareOrigTable" class="compare-table"></div>
+          </div>
+          <div class="compare-arrow">→</div>
+          <div class="compare-pane">
+            <div class="compare-pane-label">Minimized DFA</div>
+            <div id="compareMinViz" class="dfa-canvas compare-canvas"></div>
+            <div id="compareMinTable" class="compare-table"></div>
+          </div>
+        </div>
+
+        <div class="merge-map" id="mergeMap"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>Theory of Computation — DFA Minimization Project &nbsp;|&nbsp; TAFL 2026</p>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="dfa.js"></script>
+  <script src="partition.js"></script>
+  <script src="myhill.js"></script>
+  <script src="visualizer.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>
