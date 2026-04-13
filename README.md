@@ -3,7 +3,8 @@
 An interactive educational tool for learning **DFA (Deterministic Finite Automaton) Minimization**, built as part of a Theory of Automata, Formal Languages, and Computation (TAFL) project.
 
 ## 🌐 Live Demo
-
+Deployment link - https://arngithub407.github.io/DFA-minimizer/
+OR 
 Open `index.html` directly in any browser — no server or build step needed.
 
 ## 📖 Features
